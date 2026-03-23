@@ -6,6 +6,7 @@ import 'map_screen.dart';
 import 'report_list_screen.dart';
 import 'report_form_screen.dart';
 import 'login_screen.dart';
+import 'stats_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -112,7 +113,9 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.bar_chart_outlined,
                     label: 'Estatísticas',
                     color: Colors.purpleAccent,
-                    onTap: () {},
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const StatsScreen()),
+                    ),
                   ),
                 ],
               ),

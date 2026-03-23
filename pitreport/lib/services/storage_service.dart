@@ -10,4 +10,12 @@ class StorageService {
     await ref.putFile(image);
     return await ref.getDownloadURL();
   }
+
+  Future<List<String>> uploadReportImages(List<File> images, String userId) async {
+    final urls = <String>[];
+    for (final image in images) {
+      urls.add(await uploadReportImage(image, userId));
+    }
+    return urls;
+  }
 }

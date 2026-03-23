@@ -14,8 +14,9 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  // TODO: remover antes de produção
+  final _emailController = TextEditingController(text: '2501450@estudante.uab.pt');
+  final _passwordController = TextEditingController(text: '2501450');
   bool _obscurePassword = true;
 
   @override
@@ -26,10 +27,16 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
-    // TODO: remover bypass antes de produção
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
-    );
+    if (!_formKey.currentState!.validate()) return;
+    final success = await context.read<AuthProvider>().signIn(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+    if (success && mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    }
   }
 
   @override
@@ -57,12 +64,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       style: const TextStyle(color: Colors.white),
                       decoration: _inputDecoration('Email', Icons.email_outlined),
+                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Campo obrigatório' : null,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       style: const TextStyle(color: Colors.white),
+                      validator: (v) => (v == null || v.isEmpty) ? 'Campo obrigatório' : null,
                       decoration: _inputDecoration(
                         'Palavra-passe',
                         Icons.lock_outline,

@@ -169,16 +169,20 @@ Dependências instaladas automaticamente:
 | `geocoding` | ^4.0.0 | Conversão coordenadas/morada |
 | `image_picker` | ^1.2.1 | Câmara e galeria |
 | `flutter_map` | ^8.2.2 | Mapa (OpenStreetMap) |
-| `latlong2` | ^0.9.1 | Coordenadas geograficas |
+| `latlong2` | ^0.9.1 | Coordenadas geográficas |
 | `provider` | ^6.1.5+1 | Gestão de estado |
+| `flutter_compass` | ^0.8.0 | Bússola em tempo real |
+| `google_mlkit_face_detection` | ^0.13.2 | Deteção de rostos nas fotos (on-device) |
+| `intl` | ^0.20.2 | Formatação de datas |
+| `fl_chart` | ^1.2.0 | Gráficos estatísticos |
 
 ---
 
 # 5. Configuração Firebase
 
-O projeto Firebase `pit-report` ja esta configurado. O ficheiro `lib/firebase_options.dart` ja existe com as chaves para Android, iOS, macOS, Windows e Web.
+O projeto Firebase `pit-report` já está configurado. O ficheiro `lib/firebase_options.dart` já existe com as chaves para Android, iOS, macOS, Windows e Web.
 
-**Nao e necessario correr `flutterfire configure`** a menos que mudes de projeto Firebase.
+**Não é necessário correr `flutterfire configure`** a menos que mudes de projeto Firebase.
 
 Se precisares de reconfigurar:
 
@@ -188,28 +192,46 @@ flutterfire configure
 
 Selecionar o projeto `pit-report` e as plataformas desejadas.
 
+## 5.1 Índice Composto Firestore
+
+A query de listagem de denúncias por utilizador requer um índice composto. Criar em:
+
+**Firebase Console → Firestore → Indexes → Add index**
+
+| Coleção | Campo 1 | Campo 2 | Ordem |
+|---|---|---|---|
+| `reports` | `userId` (Ascending) | `createdAt` (Descending) | — |
+
+O link direto para criar o índice aparece nos logs do Android quando a query falha pela primeira vez.
+
+## 5.2 Firebase Storage — Plano de Preços
+
+O Firebase Storage requer o plano **Blaze (pay-as-you-go)**. Para uso académico o custo é efetivamente zero (generous free tier: 5 GB storage, 1 GB/dia download).
+
 ---
 
 # 6. Dispositivo de Teste
 
-Escolher uma das opcoes:
+Escolher uma das opções:
 
-### Opcao A — Emulador Android
+### Opção A — Emulador Android
 
 1. Abrir Android Studio
 2. Ir a **Device Manager**
 3. Criar um novo dispositivo virtual (AVD)
 4. Recomendado: Pixel 8, API 35
 
-### Opcao B — Telemovel Android Real
+> **Nota**: O emulador não tem sensor de bússola físico. A orientação das fotografias ficará como "não disponível" no emulador. Testar num dispositivo real para funcionalidade completa.
 
-Ativar no telemovel:
+### Opção B — Telemóvel Android Real
 
-**Definicoes > Opcoes de Programador > Depuracao USB**
+Ativar no telemóvel:
 
-Ligar por USB e confirmar a autorizacao no telemovel.
+**Definições → Opções de Programador → Depuração USB**
 
-Verificar se o dispositivo e reconhecido:
+Ligar por USB e confirmar a autorização no telemóvel.
+
+Verificar se o dispositivo é reconhecido:
 
 ```bash
 flutter devices
@@ -223,13 +245,13 @@ flutter devices
 flutter run
 ```
 
-Para correr num dispositivo especifico:
+Para correr num dispositivo específico:
 
 ```bash
 flutter run -d <device-id>
 ```
 
-Listar dispositivos disponiveis:
+Listar dispositivos disponíveis:
 
 ```bash
 flutter devices
@@ -237,53 +259,69 @@ flutter devices
 
 ---
 
-# 8. Permissoes Android Configuradas
+# 8. Permissões Android Configuradas
 
-O ficheiro `AndroidManifest.xml` ja tem as permissoes necessarias declaradas:
+O ficheiro `AndroidManifest.xml` já tem as permissões necessárias declaradas:
 
 - `ACCESS_FINE_LOCATION` — GPS preciso
 - `ACCESS_COARSE_LOCATION` — GPS aproximado
-- `CAMERA` — acesso a camera
-- `READ_MEDIA_IMAGES` — acesso a galeria (Android 13+)
+- `CAMERA` — acesso à câmara
+- `READ_MEDIA_IMAGES` — acesso à galeria (Android 13+)
 
-Nao e necessario alterar o `AndroidManifest.xml`.
+Não é necessário alterar o `AndroidManifest.xml`.
 
 ---
 
 # 9. Estrutura de Dados Firebase
 
-### Colecao: `reports`
+### Coleção: `reports`
 
-| Campo | Tipo | Descricao |
+| Campo | Tipo | Descrição |
 |---|---|---|
-| `id` | string | Identificador unico |
-| `title` | string | Titulo da denuncia |
-| `description` | string | Descricao detalhada |
+| `id` | string | Identificador único (gerado pelo Firestore) |
+| `title` | string | Título da denúncia |
+| `description` | string | Descrição detalhada |
 | `category` | string | Categoria do problema |
-| `imageUrl` | string | URL da imagem no Storage |
-| `latitude` | number | Latitude GPS |
-| `longitude` | number | Longitude GPS |
-| `address` | string | Morada resolvida |
-| `status` | string | Estado da denuncia |
-| `createdAt` | timestamp | Data de criacao |
-| `userId` | string | ID do utilizador |
+| `imageUrls` | array\<string\> | URLs das imagens no Storage |
+| `photoMetadata` | array\<object\> | Metadados por foto (ver abaixo) |
+| `latitude` | number | Latitude GPS da denúncia |
+| `longitude` | number | Longitude GPS da denúncia |
+| `address` | string | Morada resolvida por geocoding |
+| `heading` | number | Orientação em graus (0–360) no momento de submissão |
+| `headingLabel` | string | Direção cardeal (ex: "Norte", "Sudoeste") |
+| `status` | string | `pending` \| `in_progress` \| `resolved` |
+| `createdAt` | timestamp | Data de criação |
+| `userId` | string | ID do utilizador Firebase Auth |
 
-### Colecao: `users`
+#### Estrutura de `photoMetadata` (por foto)
 
-| Campo | Tipo | Descricao |
+| Campo | Tipo | Descrição |
 |---|---|---|
-| `id` | string | Identificador unico |
+| `url` | string | URL da foto no Firebase Storage |
+| `latitude` | number | Latitude GPS no momento da foto |
+| `longitude` | number | Longitude GPS no momento da foto |
+| `heading` | number | Orientação em graus no momento da foto |
+| `headingLabel` | string | Direção cardeal no momento da foto |
+
+### Coleção: `users`
+
+| Campo | Tipo | Descrição |
+|---|---|---|
+| `id` | string | Identificador único |
 | `name` | string | Nome do utilizador |
 | `email` | string | Email |
 | `createdAt` | timestamp | Data de registo |
 
 ---
 
-# 10. Comandos Uteis
+# 10. Comandos Úteis
 
 ```bash
-# Instalar dependencias
+# Instalar dependências
 flutter pub get
+
+# Atualizar dependências
+flutter pub upgrade --major-versions
 
 # Correr a app
 flutter run
@@ -294,7 +332,7 @@ flutter devices
 # Executar testes
 flutter test
 
-# Analisar codigo (lint)
+# Analisar código (lint)
 flutter analyze
 
 # Build APK Android (debug)
@@ -312,37 +350,42 @@ flutter doctor
 
 ---
 
-# 11. Checklist de Verificacao
+# 11. Checklist de Verificação
 
 Antes de correr o projeto, confirmar:
 
-- [ ] Flutter SDK instalado e no PATH (`flutter doctor` sem erros criticos)
+- [ ] Flutter SDK instalado e no PATH (`flutter doctor` sem erros críticos)
 - [ ] Android Studio instalado com Android SDK (API 35)
-- [ ] JDK 17 disponivel
+- [ ] JDK 17 disponível
 - [ ] Git instalado
 - [ ] Node.js e npm instalados
 - [ ] Firebase CLI instalado e com login feito (`firebase login`)
 - [ ] FlutterFire CLI instalado
-- [ ] Repositorio clonado
+- [ ] Repositório clonado
 - [ ] `flutter pub get` executado com sucesso
-- [ ] Emulador criado ou telemovel ligado por USB com depuracao ativa
-- [ ] `flutter devices` mostra pelo menos um dispositivo disponivel
+- [ ] Índice composto Firestore criado (`userId` + `createdAt`)
+- [ ] Firebase Storage ativo (plano Blaze)
+- [ ] Emulador criado ou telemóvel ligado por USB com depuração ativa
+- [ ] `flutter devices` mostra pelo menos um dispositivo disponível
 
 ---
 
-# 12. Stack Tecnologica
+# 12. Stack Tecnológica
 
 | Camada | Tecnologia |
 |---|---|
 | Frontend | Flutter (Dart) |
-| Autenticacao | Firebase Authentication |
+| Autenticação | Firebase Authentication |
 | Base de dados | Cloud Firestore |
 | Armazenamento de imagens | Firebase Storage |
 | Mapa | OpenStreetMap via `flutter_map` (gratuito, sem API Key) |
-| Localizacao GPS | `geolocator` + `geocoding` |
-| Camara/Galeria | `image_picker` |
+| Localização GPS | `geolocator` + `geocoding` |
+| Bússola | `flutter_compass` |
+| Câmara/Galeria | `image_picker` |
+| Deteção de rostos | `google_mlkit_face_detection` (on-device, offline) |
+| Gráficos | `fl_chart` |
 | Estado | `provider` |
 
 ---
 
-*Projeto academico — Mestrado*
+*Projeto académico — Mestrado*
