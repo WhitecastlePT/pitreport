@@ -9,11 +9,24 @@ class AuthService {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   Future<User?> signIn(String email, String password) async {
-    final credential = await _auth.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    return credential.user;
+    try {
+      final credential = await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+
+      // Resetar tentativas após login bem-sucedido
+      if (credential.user != null) {
+        await _db.collection('users').doc(credential.user!.uid).update({
+          'loginAttempts': 0,
+          'blocked': false,
+        });
+      }
+
+      return credential.user;
+    } on FirebaseAuthException {
+      rethrow;
+    }
   }
 
   Future<User?> signUp(String name, String email, String password) async {

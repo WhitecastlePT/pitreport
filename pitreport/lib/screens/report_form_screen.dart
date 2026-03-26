@@ -235,16 +235,18 @@ class _ReportFormScreenState extends State<ReportFormScreen> {
         }
         return;
       }
-      setState(() => _captures.add(_PhotoCapture(
-            file: file,
-            latitude: _latitude,
-            longitude: _longitude,
-            heading: _heading,
-            headingLabel: _headingLabel,
-          )));
+    } catch (_) {
+      // Deteção de rostos falhou (ex: modelo não disponível) — aceita a foto na mesma
     } finally {
       detector.close();
     }
+    setState(() => _captures.add(_PhotoCapture(
+          file: file,
+          latitude: _latitude,
+          longitude: _longitude,
+          heading: _heading,
+          headingLabel: _headingLabel,
+        )));
   }
 
   void _showImageOptions() {

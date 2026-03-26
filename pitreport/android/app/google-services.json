@@ -8,9 +8,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:402888703568:android:e9c105dd73839db5909b55",
+        "mobilesdk_app_id": "1:402888703568:android:b85013d3740e3af9909b55",
         "android_client_info": {
-          "package_name": "com.example.pitreport"
+          "package_name": "pt.pitreport.app"
         }
       },
       "oauth_client": [],

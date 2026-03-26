@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../models/report.dart';
 import '../theme.dart';
 
@@ -95,7 +96,33 @@ class ReportDetailScreen extends StatelessWidget {
 
           // Localização + Data
           _InfoRow(icon: Icons.location_on_outlined, text: report.address),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () async {
+              final uri = Uri.parse(
+                'https://www.google.com/maps/dir/?api=1&destination=${report.latitude},${report.longitude}',
+              );
+              if (await canLaunchUrl(uri)) {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              }
+            },
+            child: Row(
+              children: [
+                const Icon(Icons.directions, size: 15, color: Colors.lightBlueAccent),
+                const SizedBox(width: 6),
+                const Text(
+                  'Abrir no Google Maps',
+                  style: TextStyle(
+                    color: Colors.lightBlueAccent,
+                    fontSize: 13,
+                    decoration: TextDecoration.underline,
+                    decorationColor: Colors.lightBlueAccent,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           _InfoRow(icon: Icons.calendar_today_outlined, text: dateStr),
           const SizedBox(height: 20),
 

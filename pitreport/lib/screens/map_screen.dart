@@ -19,6 +19,7 @@ const _kCategories = [
   'Vandalismo',
   'Sinalização',
   'Espaços verdes',
+  'Poluição Sonora',
   'Outro',
 ];
 
@@ -37,6 +38,8 @@ class _MapScreenState extends State<MapScreen> {
 
   List<Report> _reports = [];
   StreamSubscription<List<Report>>? _reportsSub;
+  Timer? _debounce;
+  final String _currentUserId = FirebaseAuth.instance.currentUser!.uid;
 
   String? _expandedReportId;
   Report? _selectedReport;
@@ -47,19 +50,39 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _locateUser();
-    _loadReports();
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _reportsSub?.cancel();
     _mapController.dispose();
     super.dispose();
   }
 
-  void _loadReports() {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-    _reportsSub = FirestoreService().getUserReports(userId).listen((reports) {
+  void _scheduleReload() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 600), _reloadReports);
+  }
+
+  void _reloadReports() {
+    final camera = _mapController.camera;
+    final center = camera.center;
+    final ne = camera.visibleBounds.northEast;
+
+    // Distância do centro ao canto — raio da área visível em km
+    const dist = Distance();
+    final radiusKm =
+        dist.as(LengthUnit.Kilometer, center, ne) * 1.2; // 20% de margem
+
+    _reportsSub?.cancel();
+    _reportsSub = FirestoreService()
+        .getReportsInRadius(
+          latitude: center.latitude,
+          longitude: center.longitude,
+          radiusKm: radiusKm,
+        )
+        .listen((reports) {
       if (mounted) setState(() => _reports = reports);
     });
   }
@@ -134,6 +157,10 @@ class _MapScreenState extends State<MapScreen> {
 
     for (final report in _filteredReports) {
       final isExpanded = _expandedReportId == report.id;
+      final isOwn = report.userId == _currentUserId;
+      final pinColor = isExpanded
+          ? Colors.amber
+          : (isOwn ? kOrange : Colors.purpleAccent);
 
       // Pin principal da denúncia
       markers.add(Marker(
@@ -144,7 +171,7 @@ class _MapScreenState extends State<MapScreen> {
           onTap: () => _onReportTap(report),
           child: Icon(
             Icons.location_pin,
-            color: isExpanded ? Colors.amber : kOrange,
+            color: pinColor,
             size: 44,
           ),
         ),
@@ -246,6 +273,14 @@ class _MapScreenState extends State<MapScreen> {
           options: MapOptions(
             initialCenter: _center,
             initialZoom: 15,
+            onMapReady: _reloadReports,
+            onMapEvent: (event) {
+              if (event is MapEventMoveEnd ||
+                  event is MapEventFlingAnimationEnd ||
+                  event is MapEventScrollWheelZoom) {
+                _scheduleReload();
+              }
+            },
             onTap: (_, __) => setState(() {
               _expandedReportId = null;
               _selectedReport = null;

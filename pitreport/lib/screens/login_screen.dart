@@ -14,9 +14,8 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  // TODO: remover antes de produção
-  final _emailController = TextEditingController(text: '2501450@estudante.uab.pt');
-  final _passwordController = TextEditingController(text: '2501450');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
