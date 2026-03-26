@@ -31,10 +31,10 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: kNavyBlue,
       body: Center(
-        child: PitReportLogo(iconHeight: 72, fontSize: 36),
+        child: Image.asset('assets/images/pitreport-splash.png'),
       ),
     );
   }

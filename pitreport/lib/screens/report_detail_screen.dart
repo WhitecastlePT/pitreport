@@ -195,6 +195,16 @@ class _PhotoCard extends StatelessWidget {
   final Map<String, dynamic> meta;
   const _PhotoCard({required this.meta});
 
+  void _openPhotoViewer(BuildContext context, String url) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black87,
+        pageBuilder: (_, __, ___) => _PhotoViewerPage(url: url),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final url = meta['url'] as String? ?? '';
@@ -266,15 +276,18 @@ class _PhotoCard extends StatelessWidget {
             borderRadius:
                 const BorderRadius.vertical(bottom: Radius.circular(12)),
             child: url.isNotEmpty
-                ? Image.network(
-                    url,
-                    width: double.infinity,
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Container(
-                      height: 200,
-                      color: Colors.white10,
-                      child: const Icon(Icons.broken_image_outlined,
-                          color: Colors.white24, size: 48),
+                ? GestureDetector(
+                    onTap: () => _openPhotoViewer(context, url),
+                    child: Image.network(
+                      url,
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 200,
+                        color: Colors.white10,
+                        child: const Icon(Icons.broken_image_outlined,
+                            color: Colors.white24, size: 48),
+                      ),
                     ),
                   )
                 : Container(
@@ -306,6 +319,36 @@ class _InfoRow extends StatelessWidget {
               style: const TextStyle(color: Colors.white54, fontSize: 13)),
         ),
       ],
+    );
+  }
+}
+
+class _PhotoViewerPage extends StatelessWidget {
+  final String url;
+  const _PhotoViewerPage({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black87,
+      body: GestureDetector(
+        onTap: () => Navigator.of(context).pop(),
+        child: Center(
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 5.0,
+            child: Image.network(
+              url,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.broken_image_outlined,
+                color: Colors.white24,
+                size: 64,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
