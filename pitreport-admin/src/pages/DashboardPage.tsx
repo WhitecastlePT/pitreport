@@ -102,11 +102,11 @@ export default function DashboardPage() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-6xl mx-auto">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold text-navy mb-6">Dashboard</h1>
 
         {/* Cartões de resumo */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
           <StatCard label="Total de denúncias" value={stats.total} />
           <StatCard
             label="Pendentes"

@@ -168,8 +168,8 @@ export default function ReportsPage() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
           <h1 className="text-2xl font-bold text-navy">Denúncias</h1>
           <div className="flex items-center gap-2">
             {groupByConcelho && grouped && (
@@ -262,8 +262,8 @@ export default function ReportsPage() {
         ) : filtered.length === 0 ? (
           <p className="text-gray-400 text-sm">Nenhuma denúncia encontrada.</p>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   {tableHeaders.map((h) => (

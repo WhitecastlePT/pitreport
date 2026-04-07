@@ -77,7 +77,7 @@ export default function AnalyticsPage() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-6xl mx-auto">
+      <div className="p-4 md:p-8 max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold text-navy mb-6">Análise</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
