@@ -270,9 +270,9 @@ export default function ReportDetailPage() {
         );
       })()}
 
-      <div className="p-8 max-w-5xl mx-auto">
+      <div className="p-4 md:p-8 max-w-5xl mx-auto">
         {/* Cabeçalho */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-6">
           <button
             onClick={() => navigate("/reports")}
             className="text-sm text-gray-400 hover:text-navy transition-colors cursor-pointer flex items-center gap-1"

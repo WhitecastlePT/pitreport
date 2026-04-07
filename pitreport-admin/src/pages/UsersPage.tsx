@@ -82,7 +82,7 @@ export default function UsersPage() {
 
   return (
     <Layout>
-      <div className="p-8 max-w-5xl mx-auto">
+      <div className="p-4 md:p-8 max-w-5xl mx-auto">
         <h1 className="text-2xl font-bold text-navy mb-6">Utilizadores</h1>
 
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
@@ -105,8 +105,8 @@ export default function UsersPage() {
           <p className="text-gray-400 text-sm">Nenhum utilizador encontrado.</p>
         ) : (
           <>
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
                   {["Nome", "Email", "Registo", "Denúncias", "Resolvidas", "Estado", "Ações"].map((h) => (
