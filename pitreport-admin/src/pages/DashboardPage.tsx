@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bar,
   BarChart,
@@ -50,6 +51,7 @@ function StatCard({
 }
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -145,6 +147,13 @@ export default function DashboardPage() {
                     value > 0 ? `${name} ${Math.round((percent ?? 0) * 100)}%` : ""
                   }
                   labelLine={false}
+                  cursor="pointer"
+                  onClick={(entry) => {
+                    const status = Object.keys(STATUS_LABELS).find(
+                      (k) => STATUS_LABELS[k] === entry.name
+                    );
+                    if (status) navigate(`/reports?status=${status}`);
+                  }}
                 >
                   {stats.statusChartData.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
@@ -180,7 +189,13 @@ export default function DashboardPage() {
                   />
                   <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                   <Tooltip formatter={(value) => [value, "Denúncias"]} />
-                  <Bar dataKey="value" fill="#F5A623" radius={[4, 4, 0, 0]} />
+                  <Bar
+                    dataKey="value"
+                    fill="#F5A623"
+                    radius={[4, 4, 0, 0]}
+                    cursor="pointer"
+                    onClick={(entry) => navigate(`/reports?category=${encodeURIComponent(entry.name)}`)}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             )}

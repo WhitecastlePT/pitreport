@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Bar,
   BarChart,
@@ -26,6 +27,7 @@ function extractZone(address: string): string {
 }
 
 export default function AnalyticsPage() {
+  const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -106,7 +108,12 @@ export default function AnalyticsPage() {
                     width={120}
                   />
                   <Tooltip formatter={(value) => [value, "Denúncias"]} />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  <Bar
+                    dataKey="value"
+                    radius={[0, 4, 4, 0]}
+                    cursor="pointer"
+                    onClick={(entry) => navigate(`/reports?category=${encodeURIComponent(entry.name)}`)}
+                  >
                     {categoryData.map((entry) => (
                       <Cell key={entry.name} fill={entry.color} />
                     ))}
@@ -130,13 +137,18 @@ export default function AnalyticsPage() {
                 {topZones.map(({ zone, count }, i) => {
                   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
                   return (
-                    <div key={zone} className="flex items-center gap-3">
+                    <div
+                      key={zone}
+                      className="flex items-center gap-3 cursor-pointer group"
+                      onClick={() => navigate(`/reports?search=${encodeURIComponent(zone)}`)}
+                      title={`Ver denúncias em "${zone}"`}
+                    >
                       <span className="text-xs font-bold text-gray-400 w-5 text-right shrink-0">
                         {i + 1}
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-0.5">
-                          <span className="text-sm font-medium text-navy truncate pr-2">
+                          <span className="text-sm font-medium text-navy truncate pr-2 group-hover:text-orange transition-colors">
                             {zone}
                           </span>
                           <span className="text-xs text-gray-500 shrink-0">
