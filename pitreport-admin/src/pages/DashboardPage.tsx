@@ -32,18 +32,20 @@ function StatCard({
   label,
   value,
   color,
+  onClick,
 }: {
   label: string;
   value: number | string;
   color?: string;
+  onClick?: () => void;
 }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div
+      onClick={onClick}
+      className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition-shadow ${onClick ? "cursor-pointer hover:shadow-md" : ""}`}
+    >
       <p className="text-sm text-gray-500 mb-1">{label}</p>
-      <p
-        className="text-3xl font-bold"
-        style={{ color: color ?? "#151929" }}
-      >
+      <p className="text-3xl font-bold" style={{ color: color ?? "#151929" }}>
         {value}
       </p>
     </div>
@@ -109,21 +111,28 @@ export default function DashboardPage() {
 
         {/* Cartões de resumo */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-          <StatCard label="Total de denúncias" value={stats.total} />
+          <StatCard
+            label="Total de denúncias"
+            value={stats.total}
+            onClick={() => navigate("/reports")}
+          />
           <StatCard
             label="Pendentes"
             value={stats.byStatus["pending"] ?? 0}
             color={STATUS_COLORS.pending}
+            onClick={() => navigate("/reports?status=pending")}
           />
           <StatCard
             label="Em progresso"
             value={stats.byStatus["in_progress"] ?? 0}
             color={STATUS_COLORS.in_progress}
+            onClick={() => navigate("/reports?status=in_progress")}
           />
           <StatCard
             label="Taxa de resolução"
             value={`${stats.resolutionPct}%`}
             color={STATUS_COLORS.resolved}
+            onClick={() => navigate("/reports?status=resolved")}
           />
         </div>
 
