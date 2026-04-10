@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import { subscribeAllReports, updateReportStatus } from "../services/reports";
 import type { Report, ReportStatus } from "../types";
@@ -68,12 +68,13 @@ function extractGroup(address: string, groupBy: GroupBy): string {
 
 export default function ReportsPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
+  const [filterStatus, setFilterStatus] = useState(searchParams.get("status") ?? "");
+  const [filterCategory, setFilterCategory] = useState(searchParams.get("category") ?? "");
   const [filterConcelho, setFilterConcelho] = useState("");
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("asc");
   const [groupBy, setGroupBy] = useState<GroupBy>("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -265,12 +266,12 @@ export default function ReportsPage() {
                 type="text"
                 placeholder="Pesquisar por título ou morada..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setSearchParams({}, { replace: true }); }}
                 className="border border-gray-200 rounded-lg px-3 py-2 text-sm flex-1 min-w-48 focus:outline-none focus:ring-2 focus:ring-orange"
               />
               <select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
+                onChange={(e) => { setFilterStatus(e.target.value); setSearchParams({}, { replace: true }); }}
                 className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange"
               >
                 {STATUS_OPTIONS.map((o) => (
@@ -279,7 +280,7 @@ export default function ReportsPage() {
               </select>
               <select
                 value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
+                onChange={(e) => { setFilterCategory(e.target.value); setSearchParams({}, { replace: true }); }}
                 className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange"
               >
                 <option value="">Todas as categorias</option>
@@ -307,7 +308,7 @@ export default function ReportsPage() {
               </select>
               {hasActiveFilters && (
                 <button
-                  onClick={() => { setSearch(""); setFilterStatus(""); setFilterCategory(""); setFilterConcelho(""); setSortOrder("desc"); }}
+                  onClick={() => { setSearch(""); setFilterStatus(""); setFilterCategory(""); setFilterConcelho(""); setSortOrder("desc"); setSearchParams({}, { replace: true }); }}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm text-red-500 hover:text-red-700 hover:bg-red-50 border border-red-200 rounded-lg transition cursor-pointer"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
