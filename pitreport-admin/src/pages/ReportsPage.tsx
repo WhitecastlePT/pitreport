@@ -78,6 +78,9 @@ export default function ReportsPage() {
   const [groupBy, setGroupBy] = useState<GroupBy>("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [updating, setUpdating] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     const unsubscribe = subscribeAllReports((data) => {
@@ -86,6 +89,11 @@ export default function ReportsPage() {
     });
     return unsubscribe;
   }, []);
+
+  // Repor para página 1 sempre que os filtros ou agrupamento mudam
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, filterCategory, filterConcelho, search, sortOrder, groupBy]);
 
   const categories = useMemo(() => {
     const set = new Set(reports.map((r) => r.category).filter(Boolean));
@@ -115,6 +123,14 @@ export default function ReportsPage() {
       return sortOrder === "desc" ? -diff : diff;
     });
   }, [reports, filterStatus, filterCategory, filterConcelho, search, sortOrder]);
+
+  const totalPages = groupBy ? 1 : Math.ceil(filtered.length / PAGE_SIZE);
+
+  const pageRows = useMemo(() => {
+    if (groupBy) return filtered;
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, currentPage, groupBy, PAGE_SIZE]);
 
   const grouped = useMemo(() => {
     if (!groupBy) return null;
@@ -306,7 +322,13 @@ export default function ReportsPage() {
 
         {/* Contador */}
         <p className="text-sm text-gray-400 mb-3">
-          {filtered.length} {filtered.length === 1 ? "denúncia" : "denúncias"}
+          {groupBy || filtered.length <= PAGE_SIZE ? (
+            <>{filtered.length} {filtered.length === 1 ? "denúncia" : "denúncias"}</>
+          ) : (
+            <>
+              A mostrar {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} de {filtered.length} denúncias
+            </>
+          )}
         </p>
 
         {/* Tabela */}
@@ -366,9 +388,63 @@ export default function ReportsPage() {
                         </>
                       );
                     })
-                  : filtered.map((r) => <ReportRow key={r.id} report={r} />)}
+                  : pageRows.map((r) => <ReportRow key={r.id} report={r} />)}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Paginação */}
+        {!loading && !groupBy && totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Anterior
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2)
+                .reduce<(number | "…")[]>((acc, p, idx, arr) => {
+                  if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("…");
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((p, idx) =>
+                  p === "…" ? (
+                    <span key={`ellipsis-${idx}`} className="px-2 text-gray-400 text-sm select-none">…</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p as number)}
+                      className={`w-9 h-9 rounded-lg text-sm font-medium transition cursor-pointer ${
+                        currentPage === p
+                          ? "bg-navy text-white"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+            >
+              Seguinte
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
         )}
       </div>

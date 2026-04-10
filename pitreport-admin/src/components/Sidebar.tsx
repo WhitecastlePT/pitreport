@@ -53,7 +53,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
       className={`
         fixed inset-y-0 left-0 z-30 w-60 bg-navy flex flex-col
         transition-transform duration-200 ease-in-out
-        lg:relative lg:translate-x-0 lg:z-auto lg:shrink-0
+        lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 lg:z-auto lg:shrink-0
         ${open ? "translate-x-0" : "-translate-x-full"}
       `}
     >
