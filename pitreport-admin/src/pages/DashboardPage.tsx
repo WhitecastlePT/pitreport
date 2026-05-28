@@ -203,7 +203,7 @@ export default function DashboardPage() {
                     fill="#F5A623"
                     radius={[4, 4, 0, 0]}
                     cursor="pointer"
-                    onClick={(entry) => navigate(`/reports?category=${encodeURIComponent(entry.name)}`)}
+                    onClick={(entry) => navigate(`/reports?category=${encodeURIComponent(entry.name ?? '')}`)}
                   />
                 </BarChart>
               </ResponsiveContainer>

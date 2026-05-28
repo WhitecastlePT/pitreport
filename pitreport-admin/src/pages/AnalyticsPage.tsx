@@ -112,7 +112,7 @@ export default function AnalyticsPage() {
                     dataKey="value"
                     radius={[0, 4, 4, 0]}
                     cursor="pointer"
-                    onClick={(entry) => navigate(`/reports?category=${encodeURIComponent(entry.name)}`)}
+                    onClick={(entry) => navigate(`/reports?category=${encodeURIComponent(entry.name ?? '')}`)}
                   >
                     {categoryData.map((entry) => (
                       <Cell key={entry.name} fill={entry.color} />
