@@ -1,9 +1,11 @@
 import {
+  addDoc,
   collection,
   doc,
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -50,4 +52,20 @@ export async function updateReportStatus(
   status: ReportStatus
 ): Promise<void> {
   await updateDoc(doc(db, "reports", id), { status });
+}
+
+export async function sendStatusNotification(
+  userId: string,
+  reportId: string,
+  reportTitle: string,
+  newStatus: ReportStatus
+): Promise<void> {
+  await addDoc(collection(db, "notifications"), {
+    userId,
+    reportId,
+    reportTitle,
+    newStatus,
+    createdAt: serverTimestamp(),
+    sent: false,
+  });
 }

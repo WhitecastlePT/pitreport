@@ -6,7 +6,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import Layout from "../components/Layout";
 import StatusBadge from "../components/StatusBadge";
-import { updateReportStatus } from "../services/reports";
+import { updateReportStatus, sendStatusNotification } from "../services/reports";
 import { subscribeMessages, sendMessage } from "../services/messages";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
@@ -138,6 +138,7 @@ export default function ReportDetailPage() {
     if (!report) return;
     setSaving(true);
     await updateReportStatus(report.id, status);
+    await sendStatusNotification(report.userId, report.id, report.title, status);
     setReport((prev) => prev ? { ...prev, status } : prev);
     setSaving(false);
     setSaved(true);

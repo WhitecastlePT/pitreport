@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'notification_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -15,11 +16,12 @@ class AuthService {
         password: password,
       );
 
-      // Resetar tentativas após login bem-sucedido
       if (credential.user != null) {
+        final token = await NotificationService.getToken();
         await _db.collection('users').doc(credential.user!.uid).update({
           'loginAttempts': 0,
           'blocked': false,
+          if (token != null) 'fcmToken': token,
         });
       }
 
@@ -36,11 +38,13 @@ class AuthService {
     );
     final user = credential.user;
     if (user != null) {
+      final token = await NotificationService.getToken();
       await _db.collection('users').doc(user.uid).set({
         'id': user.uid,
         'name': name.trim(),
         'email': email.trim(),
         'createdAt': FieldValue.serverTimestamp(),
+        if (token != null) 'fcmToken': token,
       });
     }
     return user;

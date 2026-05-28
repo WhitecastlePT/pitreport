@@ -1,0 +1,16 @@
+{
+  "name": "pitreport-backend",
+  "version": "1.0.0",
+  "description": "PitReport FCM notification backend",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "firebase-admin": "^13.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
