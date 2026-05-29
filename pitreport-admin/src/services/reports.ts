@@ -61,10 +61,26 @@ export async function sendStatusNotification(
   newStatus: ReportStatus
 ): Promise<void> {
   await addDoc(collection(db, "notifications"), {
+    type: "status_change",
     userId,
     reportId,
     reportTitle,
     newStatus,
+    createdAt: serverTimestamp(),
+    sent: false,
+  });
+}
+
+export async function sendFeedbackNotification(
+  userId: string,
+  reportId: string,
+  reportTitle: string
+): Promise<void> {
+  await addDoc(collection(db, "notifications"), {
+    type: "feedback",
+    userId,
+    reportId,
+    reportTitle,
     createdAt: serverTimestamp(),
     sent: false,
   });

@@ -6,7 +6,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import Layout from "../components/Layout";
 import StatusBadge from "../components/StatusBadge";
-import { updateReportStatus, sendStatusNotification } from "../services/reports";
+import { updateReportStatus, sendStatusNotification, sendFeedbackNotification } from "../services/reports";
 import { subscribeMessages, sendMessage } from "../services/messages";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
@@ -94,9 +94,10 @@ export default function ReportDetailPage() {
   }, [id]);
 
   async function handleSendMessage() {
-    if (!newMessage.trim() || !id || !user) return;
+    if (!newMessage.trim() || !id || !user || !report) return;
     setSending(true);
     await sendMessage(id, newMessage, user.uid, user.email ?? "Admin");
+    await sendFeedbackNotification(report.userId, report.id, report.title);
     setNewMessage("");
     setSending(false);
   }

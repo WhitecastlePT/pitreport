@@ -32,15 +32,18 @@ db.collection('notifications')
           continue;
         }
 
+        const isFeedback = notif.type === 'feedback';
         await messaging.send({
           token: fcmToken,
           notification: {
-            title: 'Denúncia atualizada',
-            body: `"${notif.reportTitle}" → ${STATUS_LABELS[notif.newStatus] ?? notif.newStatus}`,
+            title: isFeedback ? 'Novo feedback na sua denúncia' : 'Denúncia atualizada',
+            body: isFeedback
+              ? `A sua denúncia "${notif.reportTitle}" recebeu um comentário`
+              : `"${notif.reportTitle}" → ${STATUS_LABELS[notif.newStatus] ?? notif.newStatus}`,
           },
           data: {
             reportId: notif.reportId,
-            newStatus: notif.newStatus,
+            type: notif.type ?? 'status_change',
           },
         });
 
