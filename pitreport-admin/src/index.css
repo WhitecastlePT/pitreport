@@ -3,4 +3,5 @@
 @theme {
   --color-navy: #151929;
   --color-orange: #F5A623;
+  --font-sans: 'Inter', system-ui, sans-serif;
 }
