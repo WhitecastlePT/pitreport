@@ -430,15 +430,18 @@ class _NotificationsHistory extends StatelessWidget {
             final date = (data['createdAt'] as Timestamp?)?.toDate();
             final title = isFeedback
                 ? 'Novo feedback recebido'
-                : 'Estado alterado: ${_statusLabels[newStatus] ?? newStatus ?? ''}';
-            final hasDetail = isFeedback && messageText != null && messageText.isNotEmpty;
+                : 'Estado alterado';
+            final detailText = isFeedback
+                ? (messageText?.isNotEmpty == true
+                    ? messageText!
+                    : 'Sem texto disponível.')
+                : 'Estado atualizado para: ${_statusLabels[newStatus] ?? newStatus ?? ''}';
 
             return ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Theme(
                 data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
-                  enabled: hasDetail,
                   collapsedBackgroundColor: Colors.white.withOpacity(0.07),
                   backgroundColor: Colors.white.withOpacity(0.1),
                   tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -455,24 +458,19 @@ class _NotificationsHistory extends StatelessWidget {
                           style: const TextStyle(color: Colors.white38, fontSize: 11),
                         )
                       : null,
-                  trailing: hasDetail
-                      ? const Icon(Icons.expand_more, color: Colors.white38, size: 18)
-                      : const SizedBox.shrink(),
-                  children: hasDetail
-                      ? [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                messageText!,
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 13),
-                              ),
-                            ),
-                          ),
-                        ]
-                      : [],
+                  trailing: const Icon(Icons.expand_more, color: Colors.white38, size: 18),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          detailText,
+                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
