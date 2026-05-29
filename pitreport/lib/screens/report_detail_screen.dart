@@ -198,7 +198,7 @@ class ReportDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          _NotificationsHistory(reportId: report.id),
+          _NotificationsHistory(reportId: report.id, userId: report.userId),
           const SizedBox(height: 16),
         ],
       ),
@@ -370,7 +370,8 @@ class _PhotoViewerPage extends StatelessWidget {
 
 class _NotificationsHistory extends StatelessWidget {
   final String reportId;
-  const _NotificationsHistory({required this.reportId});
+  final String userId;
+  const _NotificationsHistory({required this.reportId, required this.userId});
 
   static const _statusLabels = {
     'pending': 'Pendente',
@@ -384,6 +385,7 @@ class _NotificationsHistory extends StatelessWidget {
       stream: FirebaseFirestore.instance
           .collection('notifications')
           .where('reportId', isEqualTo: reportId)
+          .where('userId', isEqualTo: userId)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
