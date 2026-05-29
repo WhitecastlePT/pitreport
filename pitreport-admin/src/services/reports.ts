@@ -74,13 +74,15 @@ export async function sendStatusNotification(
 export async function sendFeedbackNotification(
   userId: string,
   reportId: string,
-  reportTitle: string
+  reportTitle: string,
+  messageText: string
 ): Promise<void> {
   await addDoc(collection(db, "notifications"), {
     type: "feedback",
     userId,
     reportId,
     reportTitle,
+    messageText,
     createdAt: serverTimestamp(),
     sent: false,
   });

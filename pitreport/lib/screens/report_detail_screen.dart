@@ -51,18 +51,32 @@ class ReportDetailScreen extends StatelessWidget {
     final dateStr = DateFormat('dd/MM/yyyy HH:mm').format(report.createdAt);
     final statusColor = _statusColor(report.status);
 
-    return Scaffold(
-      backgroundColor: kNavyBlue,
-      appBar: AppBar(
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
         backgroundColor: kNavyBlue,
-        elevation: 0,
-        title: const Text('Detalhe da Denúncia',
-            style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
+        appBar: AppBar(
+          backgroundColor: kNavyBlue,
+          elevation: 0,
+          title: const Text('Detalhe da Denúncia',
+              style: TextStyle(color: Colors.white)),
+          iconTheme: const IconThemeData(color: Colors.white),
+          bottom: const TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white38,
+            indicatorColor: kOrange,
+            tabs: [
+              Tab(text: 'Detalhes'),
+              Tab(text: 'Atualizações'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            // ── Tab 1: Detalhes ──
+            ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
           // Estado + Categoria
           Row(
             children: [
@@ -185,22 +199,14 @@ class ReportDetailScreen extends StatelessWidget {
           else
             const Text('Sem fotografias',
                 style: TextStyle(color: Colors.white38)),
-
-          // Histórico de notificações
-          const SizedBox(height: 24),
-          const Text(
-            'Histórico de Atualizações',
-            style: TextStyle(
-              color: Colors.white70,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _NotificationsHistory(reportId: report.id, userId: report.userId),
           const SizedBox(height: 16),
         ],
+      ),
+
+      // ── Tab 2: Atualizações ──
+      _NotificationsHistory(reportId: report.id, userId: report.userId),
+    ],
+        ),
       ),
     );
   }
@@ -390,16 +396,18 @@ class _NotificationsHistory extends StatelessWidget {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(8),
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white38),
-            ),
+            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white38),
           );
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Text(
-            'Sem atualizações ainda.',
-            style: TextStyle(color: Colors.white38, fontSize: 13),
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: Text(
+                'Sem atualizações ainda.',
+                style: TextStyle(color: Colors.white38, fontSize: 14),
+              ),
+            ),
           );
         }
 
@@ -410,52 +418,65 @@ class _NotificationsHistory extends StatelessWidget {
             return tb.compareTo(ta);
           });
 
-        return Column(
-          children: docs.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: docs.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (context, i) {
+            final data = docs[i].data() as Map<String, dynamic>;
             final isFeedback = (data['type'] as String?) == 'feedback';
             final newStatus = data['newStatus'] as String?;
+            final messageText = data['messageText'] as String?;
             final date = (data['createdAt'] as Timestamp?)?.toDate();
             final title = isFeedback
                 ? 'Novo feedback recebido'
-                : 'Estado: ${_statusLabels[newStatus] ?? newStatus ?? ''}';
+                : 'Estado alterado: ${_statusLabels[newStatus] ?? newStatus ?? ''}';
+            final hasDetail = isFeedback && messageText != null && messageText.isNotEmpty;
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.07),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.white12),
-              ),
-              child: Row(
-                children: [
-                  Icon(
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Theme(
+                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                child: ExpansionTile(
+                  enabled: hasDetail,
+                  collapsedBackgroundColor: Colors.white.withOpacity(0.07),
+                  backgroundColor: Colors.white.withOpacity(0.1),
+                  tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  leading: Icon(
                     isFeedback ? Icons.message_outlined : Icons.update,
                     color: isFeedback ? Colors.lightBlueAccent : kOrange,
-                    size: 18,
+                    size: 20,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(title,
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 13)),
-                        if (date != null)
-                          Text(
-                            DateFormat('dd/MM/yyyy HH:mm').format(date),
-                            style: const TextStyle(
-                                color: Colors.white38, fontSize: 11),
+                  title: Text(title,
+                      style: const TextStyle(color: Colors.white, fontSize: 13)),
+                  subtitle: date != null
+                      ? Text(
+                          DateFormat('dd/MM/yyyy HH:mm').format(date),
+                          style: const TextStyle(color: Colors.white38, fontSize: 11),
+                        )
+                      : null,
+                  trailing: hasDetail
+                      ? const Icon(Icons.expand_more, color: Colors.white38, size: 18)
+                      : const SizedBox.shrink(),
+                  children: hasDetail
+                      ? [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                messageText!,
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 13),
+                              ),
+                            ),
                           ),
-                      ],
-                    ),
-                  ),
-                ],
+                        ]
+                      : [],
+                ),
               ),
             );
-          }).toList(),
+          },
         );
       },
     );

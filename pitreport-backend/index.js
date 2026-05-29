@@ -38,7 +38,7 @@ db.collection('notifications')
           notification: {
             title: isFeedback ? 'Novo feedback na sua denúncia' : 'Denúncia atualizada',
             body: isFeedback
-              ? `A sua denúncia "${notif.reportTitle}" recebeu um comentário`
+              ? notif.messageText || `A sua denúncia "${notif.reportTitle}" recebeu um comentário`
               : `"${notif.reportTitle}" → ${STATUS_LABELS[notif.newStatus] ?? notif.newStatus}`,
           },
           data: {

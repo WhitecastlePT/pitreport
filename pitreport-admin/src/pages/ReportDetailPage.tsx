@@ -97,7 +97,7 @@ export default function ReportDetailPage() {
     if (!newMessage.trim() || !id || !user || !report) return;
     setSending(true);
     await sendMessage(id, newMessage, user.uid, user.email ?? "Admin");
-    await sendFeedbackNotification(report.userId, report.id, report.title);
+    await sendFeedbackNotification(report.userId, report.id, report.title, newMessage.trim());
     setNewMessage("");
     setSending(false);
   }
