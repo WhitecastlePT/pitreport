@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -180,11 +181,25 @@ class ReportDetailScreen extends StatelessWidget {
           if (report.photoMetadata.isNotEmpty)
             ...report.photoMetadata.map((meta) => _PhotoCard(meta: meta))
           else if (report.imageUrls.isNotEmpty)
-            // fallback para denúncias antigas sem metadata
             ...report.imageUrls.map((url) => _PhotoCard(meta: {'url': url}))
           else
             const Text('Sem fotografias',
                 style: TextStyle(color: Colors.white38)),
+
+          // Histórico de notificações
+          const SizedBox(height: 24),
+          const Text(
+            'Histórico de Atualizações',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          _NotificationsHistory(reportId: report.id),
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -349,6 +364,98 @@ class _PhotoViewerPage extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _NotificationsHistory extends StatelessWidget {
+  final String reportId;
+  const _NotificationsHistory({required this.reportId});
+
+  static const _statusLabels = {
+    'pending': 'Pendente',
+    'in_progress': 'Em análise',
+    'resolved': 'Resolvido',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('notifications')
+          .where('reportId', isEqualTo: reportId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(8),
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white38),
+            ),
+          );
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Text(
+            'Sem atualizações ainda.',
+            style: TextStyle(color: Colors.white38, fontSize: 13),
+          );
+        }
+
+        final docs = snapshot.data!.docs.toList()
+          ..sort((a, b) {
+            final ta = (a['createdAt'] as Timestamp?)?.toDate() ?? DateTime(0);
+            final tb = (b['createdAt'] as Timestamp?)?.toDate() ?? DateTime(0);
+            return tb.compareTo(ta);
+          });
+
+        return Column(
+          children: docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final isFeedback = (data['type'] as String?) == 'feedback';
+            final newStatus = data['newStatus'] as String?;
+            final date = (data['createdAt'] as Timestamp?)?.toDate();
+            final title = isFeedback
+                ? 'Novo feedback recebido'
+                : 'Estado: ${_statusLabels[newStatus] ?? newStatus ?? ''}';
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.07),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    isFeedback ? Icons.message_outlined : Icons.update,
+                    color: isFeedback ? Colors.lightBlueAccent : kOrange,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(title,
+                            style: const TextStyle(
+                                color: Colors.white, fontSize: 13)),
+                        if (date != null)
+                          Text(
+                            DateFormat('dd/MM/yyyy HH:mm').format(date),
+                            style: const TextStyle(
+                                color: Colors.white38, fontSize: 11),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
     );
   }
 }
