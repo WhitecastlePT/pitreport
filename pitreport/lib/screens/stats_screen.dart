@@ -1,7 +1,7 @@
 import 'dart:math';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import '../models/report.dart';
 import '../services/firestore_service.dart';
@@ -17,46 +17,175 @@ const _palette = [
   Color(0xFFFFD54F),
 ];
 
-class StatsScreen extends StatelessWidget {
+class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
 
   @override
+  State<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends State<StatsScreen> {
+  static const _radii = [1.0, 5.0, 10.0, 25.0, 50.0];
+  double _radius = 5.0;
+  Position? _position;
+  bool _loadingLocation = true;
+  String? _locationError;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLocation();
+  }
+
+  Future<void> _fetchLocation() async {
+    setState(() { _loadingLocation = true; _locationError = null; });
+    try {
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception('Permissão de localização negada permanentemente.');
+      }
+      final pos = await Geolocator.getCurrentPosition();
+      if (mounted) setState(() { _position = pos; _loadingLocation = false; });
+    } catch (e) {
+      if (mounted) setState(() { _locationError = 'Não foi possível obter a localização.'; _loadingLocation = false; });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
     return Scaffold(
       backgroundColor: kNavyBlue,
       appBar: AppBar(
         backgroundColor: kNavyBlue,
         elevation: 0,
-        title: const Text('Estatísticas',
+        title: const Text('Estatísticas da Zona',
             style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: StreamBuilder<List<Report>>(
-        stream: FirestoreService().getUserReports(userId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-                child: CircularProgressIndicator(color: kOrange));
-          }
-          final reports = snapshot.data ?? [];
-          if (reports.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.bar_chart_outlined,
-                      size: 64, color: Colors.white24),
-                  SizedBox(height: 12),
-                  Text('Sem dados para mostrar',
-                      style:
-                          TextStyle(color: Colors.white54, fontSize: 16)),
-                ],
+      body: Column(
+        children: [
+          _RadiusSelector(
+            radii: _radii,
+            selected: _radius,
+            onSelected: (r) => setState(() => _radius = r),
+          ),
+          Expanded(child: _buildBody()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_loadingLocation) {
+      return const Center(child: CircularProgressIndicator(color: kOrange));
+    }
+    if (_locationError != null || _position == null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.location_off, size: 64, color: Colors.white24),
+            const SizedBox(height: 12),
+            Text(_locationError ?? 'Localização indisponível',
+                style: const TextStyle(color: Colors.white54, fontSize: 15),
+                textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: _fetchLocation,
+              icon: const Icon(Icons.refresh, color: kOrange),
+              label: const Text('Tentar novamente',
+                  style: TextStyle(color: kOrange)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return StreamBuilder<List<Report>>(
+      stream: FirestoreService().getReportsInRadius(
+        latitude: _position!.latitude,
+        longitude: _position!.longitude,
+        radiusKm: _radius,
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: kOrange));
+        }
+        final reports = snapshot.data ?? [];
+        if (reports.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.bar_chart_outlined, size: 64, color: Colors.white24),
+                SizedBox(height: 12),
+                Text('Sem denúncias nesta zona',
+                    style: TextStyle(color: Colors.white54, fontSize: 16)),
+              ],
+            ),
+          );
+        }
+        return _StatsBody(reports: reports);
+      },
+    );
+  }
+}
+
+class _RadiusSelector extends StatelessWidget {
+  final List<double> radii;
+  final double selected;
+  final ValueChanged<double> onSelected;
+  const _RadiusSelector({required this.radii, required this.selected, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        border: const Border(bottom: BorderSide(color: Colors.white12)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.my_location, color: Colors.white38, size: 16),
+          const SizedBox(width: 8),
+          const Text('Raio:', style: TextStyle(color: Colors.white54, fontSize: 13)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: radii.map((r) {
+                  final isSelected = r == selected;
+                  final label = r < 1 ? '${(r * 1000).toInt()}m' : '${r.toInt()} km';
+                  return GestureDetector(
+                    onTap: () => onSelected(r),
+                    child: Container(
+                      margin: const EdgeInsets.only(right: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: isSelected ? kOrange : Colors.white.withOpacity(0.07),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: isSelected ? kOrange : Colors.white24),
+                      ),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : Colors.white54,
+                          fontSize: 12,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
-            );
-          }
-          return _StatsBody(reports: reports);
-        },
+            ),
+          ),
+        ],
       ),
     );
   }
