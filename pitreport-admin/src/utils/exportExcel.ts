@@ -7,6 +7,76 @@ const STATUS_LABELS: Record<string, string> = {
   resolved: "Resolvida",
 };
 
+function addressParts(address: string): string[] {
+  if (!address) return [];
+  return address
+    .split(",")
+    .map((p) => p.trim())
+    .filter((p) => p && p.toLowerCase() !== "portugal");
+}
+
+function extractRua(address: string): string {
+  return addressParts(address)[0] ?? "";
+}
+
+function extractFreguesia(address: string): string {
+  const parts = addressParts(address);
+  return parts[1] ?? parts[0] ?? "";
+}
+
+function extractConcelho(address: string): string {
+  const parts = addressParts(address);
+  return parts[parts.length - 1] ?? "";
+}
+
+function mapsUrl(lat: number, lon: number): string {
+  return `https://www.google.com/maps?q=${lat},${lon}`;
+}
+
+export function exportReportsToExcel(reports: Report[]): void {
+  const wb = XLSX.utils.book_new();
+
+  const rows: unknown[][] = [
+    [
+      "ID", "Título", "Categoria", "Estado",
+      "Morada", "Rua", "Freguesia", "Concelho",
+      "Latitude", "Longitude", "Google Maps",
+      "Data de submissão",
+    ],
+    ...reports.map((r) => [
+      r.id,
+      r.title,
+      r.category,
+      STATUS_LABELS[r.status] ?? r.status,
+      r.address,
+      extractRua(r.address),
+      extractFreguesia(r.address),
+      extractConcelho(r.address),
+      r.latitude || "",
+      r.longitude || "",
+      r.latitude && r.longitude ? mapsUrl(r.latitude, r.longitude) : "",
+      r.createdAt.toLocaleDateString("pt-PT"),
+    ]),
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+  // Tornar a coluna Google Maps num hyperlink clicável (coluna K = índice 10)
+  reports.forEach((r, i) => {
+    if (r.latitude && r.longitude) {
+      const cellRef = XLSX.utils.encode_cell({ r: i + 1, c: 10 });
+      if (ws[cellRef]) {
+        ws[cellRef].l = { Target: mapsUrl(r.latitude, r.longitude) };
+      }
+    }
+  });
+
+  XLSX.utils.book_append_sheet(wb, ws, "Denúncias");
+
+  const date = new Date().toISOString().slice(0, 10);
+  XLSX.writeFile(wb, `denuncias_${date}.xlsx`);
+}
+
 function extractZone(address: string): string {
   const parts = address.split(",").map((s) => s.trim()).filter(Boolean);
   return parts[1] ?? parts[0] ?? "Desconhecida";
