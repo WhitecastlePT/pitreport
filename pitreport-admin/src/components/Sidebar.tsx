@@ -1,10 +1,19 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import type { AdminRole } from "../types";
 
-const links = [
+interface NavItem {
+  to: string;
+  label: string;
+  roles: AdminRole[];
+  icon: React.ReactNode;
+}
+
+const links: NavItem[] = [
   {
     to: "/dashboard",
     label: "Dashboard",
+    roles: ["admin", "operator"],
     icon: (
       <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -14,6 +23,7 @@ const links = [
   {
     to: "/reports",
     label: "Denúncias",
+    roles: ["admin", "operator"],
     icon: (
       <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -21,8 +31,19 @@ const links = [
     ),
   },
   {
+    to: "/analytics",
+    label: "Análise",
+    roles: ["admin", "operator"],
+    icon: (
+      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+  },
+  {
     to: "/users",
     label: "Utilizadores",
+    roles: ["admin"],
     icon: (
       <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-4.13a4 4 0 11-8 0 4 4 0 018 0zm6 4a3 3 0 10-6 0" />
@@ -30,11 +51,12 @@ const links = [
     ),
   },
   {
-    to: "/analytics",
-    label: "Análise",
+    to: "/operators",
+    label: "Operadores",
+    roles: ["admin", "operator"],
     icon: (
       <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
       </svg>
     ),
   },
@@ -46,7 +68,8 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ open, onClose }: SidebarProps) {
-  const { signOut, user } = useAuth();
+  const { signOut, user, role } = useAuth();
+  const visibleLinks = links.filter((l) => role && l.roles.includes(role));
 
   return (
     <aside
@@ -79,7 +102,7 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
       {/* Navegação */}
       <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
-        {links.map((link) => (
+        {visibleLinks.map((link) => (
           <NavLink
             key={link.to}
             to={link.to}
@@ -100,7 +123,8 @@ export default function Sidebar({ open, onClose }: SidebarProps) {
 
       {/* Rodapé com utilizador e logout */}
       <div className="px-4 py-4 border-t border-white/10">
-        <p className="text-xs text-white/40 truncate mb-3">{user?.email}</p>
+        <p className="text-xs text-white/40 truncate">{user?.email}</p>
+        <p className="text-xs text-orange/70 mb-3 capitalize">{role}</p>
         <button
           onClick={signOut}
           className="flex items-center gap-2 text-sm text-white/60 hover:text-white transition-colors cursor-pointer"

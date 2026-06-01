@@ -1,5 +1,12 @@
 export type ReportStatus = "pending" | "in_progress" | "resolved";
 
+export type AdminRole = "admin" | "operator";
+
+export interface AdminDoc {
+  email: string;
+  role: AdminRole;
+}
+
 export interface PhotoMetadata {
   url: string;
   latitude: number;

@@ -1,12 +1,14 @@
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import type { AdminDoc, AdminRole } from "../types";
 
-/**
- * Verifica se o utilizador com o UID fornecido existe na coleção `admins`.
- * Para adicionar um admin: criar um documento em Firestore > admins > <uid>
- * com o campo { email: "..." } para facilitar identificação.
- */
-export async function checkIsAdmin(uid: string): Promise<boolean> {
+export async function getAdminDoc(uid: string): Promise<AdminDoc | null> {
   const snap = await getDoc(doc(db, "admins", uid));
-  return snap.exists();
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return {
+    email: (data.email as string) ?? "",
+    // Documentos sem campo role (anteriores ao sistema de roles) são tratados como admin
+    role: ((data.role as AdminRole) ?? "admin"),
+  };
 }
