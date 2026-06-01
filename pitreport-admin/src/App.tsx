@@ -7,6 +7,7 @@ import ReportsPage from "./pages/ReportsPage";
 import ReportDetailPage from "./pages/ReportDetailPage";
 import UsersPage from "./pages/UsersPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import OperatorsPage from "./pages/OperatorsPage";
 
 export default function App() {
   return (
@@ -40,18 +41,28 @@ export default function App() {
             }
           />
           <Route
-            path="/users"
+            path="/analytics"
             element={
               <PrivateRoute>
+                <AnalyticsPage />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Rotas exclusivas de admin */}
+          <Route
+            path="/users"
+            element={
+              <PrivateRoute allowedRoles={["admin"]}>
                 <UsersPage />
               </PrivateRoute>
             }
           />
           <Route
-            path="/analytics"
+            path="/operators"
             element={
               <PrivateRoute>
-                <AnalyticsPage />
+                <OperatorsPage />
               </PrivateRoute>
             }
           />

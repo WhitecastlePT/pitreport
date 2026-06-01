@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import Layout from "../components/Layout";
 import { subscribeAllReports } from "../services/reports";
+import { exportAnalyticsToExcel } from "../utils/exportExcel";
 import type { Report } from "../types";
 
 const CATEGORY_COLORS = [
@@ -80,7 +81,19 @@ export default function AnalyticsPage() {
   return (
     <Layout>
       <div className="p-4 md:p-8 max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold text-navy mb-6">Análise</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-navy">Análise</h1>
+          <button
+            onClick={() => exportAnalyticsToExcel(reports)}
+            disabled={reports.length === 0}
+            className="flex items-center gap-2 border border-gray-300 text-gray-600 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition disabled:opacity-40 cursor-pointer"
+          >
+            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            Exportar Excel
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Denúncias por categoria — gráfico */}

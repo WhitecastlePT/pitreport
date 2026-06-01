@@ -1,9 +1,15 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import type { ReactNode } from "react";
+import type { AdminRole } from "../types";
 
-export default function PrivateRoute({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+interface Props {
+  children: ReactNode;
+  allowedRoles?: AdminRole[];
+}
+
+export default function PrivateRoute({ children, allowedRoles }: Props) {
+  const { user, role, loading } = useAuth();
 
   if (loading) {
     return (
@@ -13,5 +19,11 @@ export default function PrivateRoute({ children }: { children: ReactNode }) {
     );
   }
 
-  return user ? <>{children}</> : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (allowedRoles && role && !allowedRoles.includes(role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
 }
