@@ -32,15 +32,31 @@ db.collection('notifications')
           continue;
         }
 
-        const isFeedback = notif.type === 'feedback';
+        let title;
+        let body;
+        switch (notif.type) {
+          case 'feedback':
+            title = 'Novo feedback na sua denúncia';
+            body =
+              notif.messageText ||
+              `A sua denúncia "${notif.reportTitle}" recebeu um comentário`;
+            break;
+          case 'archived':
+            title = 'Denúncia arquivada';
+            body = `A sua denúncia "${notif.reportTitle}" foi arquivada. O caso foi tratado.`;
+            break;
+          case 'unarchived':
+            title = 'Denúncia restaurada';
+            body = `A sua denúncia "${notif.reportTitle}" foi restaurada e está novamente ativa.`;
+            break;
+          default:
+            title = 'Denúncia atualizada';
+            body = `"${notif.reportTitle}" → ${STATUS_LABELS[notif.newStatus] ?? notif.newStatus}`;
+        }
+
         await messaging.send({
           token: fcmToken,
-          notification: {
-            title: isFeedback ? 'Novo feedback na sua denúncia' : 'Denúncia atualizada',
-            body: isFeedback
-              ? notif.messageText || `A sua denúncia "${notif.reportTitle}" recebeu um comentário`
-              : `"${notif.reportTitle}" → ${STATUS_LABELS[notif.newStatus] ?? notif.newStatus}`,
-          },
+          notification: { title, body },
           data: {
             reportId: notif.reportId,
             type: notif.type ?? 'status_change',
