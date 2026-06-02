@@ -207,6 +207,45 @@ export default function ReportsPage() {
     );
   }
 
+  function ReportCard({ report }: { report: Report }) {
+    const fields: [string, React.ReactNode][] = [
+      ["Título", <span className="font-medium text-navy">{report.title || "—"}</span>],
+      ["Categoria", report.category || "—"],
+      ["Morada", report.address || "—"],
+      ["Data", formatDate(report.createdAt)],
+    ];
+    return (
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+        <dl className="divide-y divide-gray-50">
+          {fields.map(([label, value]) => (
+            <div key={label} className="flex gap-3 py-1.5">
+              <dt className="text-xs font-semibold text-gray-400 w-20 shrink-0 pt-0.5">{label}</dt>
+              <dd className="text-sm text-gray-700 flex-1 break-words">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-100">
+          <select
+            value={report.status}
+            disabled={updating === report.id}
+            onChange={(e) => handleStatusChange(report.id, e.target.value as ReportStatus)}
+            className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-orange disabled:opacity-50 flex-1"
+          >
+            {Object.entries(STATUS_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => navigate(`/reports/${report.id}`)}
+            className="text-xs font-medium text-orange hover:underline cursor-pointer shrink-0"
+          >
+            Ver detalhes
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const tableHeaders = ["Título", "Categoria", "Morada", "Estado", "Data", "Ações"];
 
   return (
@@ -350,61 +389,95 @@ export default function ReportsPage() {
         ) : filtered.length === 0 ? (
           <p className="text-gray-400 text-sm">Nenhuma denúncia encontrada.</p>
         ) : (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
-            <table className="w-full text-sm min-w-[700px]">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  {tableHeaders.map((h) => (
-                    <th
-                      key={h}
-                      className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {grouped
-                  ? grouped.map(([groupKey, rows]) => {
-                      const isCollapsed = collapsedGroups.has(groupKey);
-                      return (
-                        <>
-                          <tr
-                            key={`header-${groupKey}`}
-                            className="bg-navy/5 cursor-pointer hover:bg-navy/10 transition-colors select-none"
-                            onClick={() => toggleGroup(groupKey)}
+          <>
+            {/* Desktop — tabela */}
+            <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+              <table className="w-full text-sm min-w-[700px]">
+                <thead className="bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    {tableHeaders.map((h) => (
+                      <th
+                        key={h}
+                        className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                      >
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {grouped
+                    ? grouped.map(([groupKey, rows]) => {
+                        const isCollapsed = collapsedGroups.has(groupKey);
+                        return (
+                          <>
+                            <tr
+                              key={`header-${groupKey}`}
+                              className="bg-navy/5 cursor-pointer hover:bg-navy/10 transition-colors select-none"
+                              onClick={() => toggleGroup(groupKey)}
+                            >
+                              <td colSpan={6} className="px-4 py-2">
+                                <div className="flex items-center gap-2">
+                                  <svg
+                                    className={`w-4 h-4 text-navy transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                  </svg>
+                                  <span className="text-xs font-semibold text-navy uppercase tracking-wide">
+                                    {groupKey}
+                                  </span>
+                                  <span className="text-xs font-normal text-gray-400">
+                                    ({rows.length} {rows.length === 1 ? "denúncia" : "denúncias"})
+                                  </span>
+                                </div>
+                              </td>
+                            </tr>
+                            {!isCollapsed && rows.map((r) => (
+                              <ReportRow key={r.id} report={r} />
+                            ))}
+                          </>
+                        );
+                      })
+                    : pageRows.map((r) => <ReportRow key={r.id} report={r} />)}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile — cards */}
+            <div className="md:hidden space-y-3">
+              {grouped
+                ? grouped.map(([groupKey, rows]) => {
+                    const isCollapsed = collapsedGroups.has(groupKey);
+                    return (
+                      <div key={`mobile-group-${groupKey}`}>
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 bg-navy/5 rounded-lg mb-2 text-left"
+                          onClick={() => toggleGroup(groupKey)}
+                        >
+                          <svg
+                            className={`w-4 h-4 text-navy transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
+                            fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
                           >
-                            <td colSpan={6} className="px-4 py-2">
-                              <div className="flex items-center gap-2">
-                                <svg
-                                  className={`w-4 h-4 text-navy transition-transform duration-200 ${isCollapsed ? "-rotate-90" : ""}`}
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth={2}
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                                </svg>
-                                <span className="text-xs font-semibold text-navy uppercase tracking-wide">
-                                  {groupKey}
-                                </span>
-                                <span className="text-xs font-normal text-gray-400">
-                                  ({rows.length} {rows.length === 1 ? "denúncia" : "denúncias"})
-                                </span>
-                              </div>
-                            </td>
-                          </tr>
-                          {!isCollapsed && rows.map((r) => (
-                            <ReportRow key={r.id} report={r} />
-                          ))}
-                        </>
-                      );
-                    })
-                  : pageRows.map((r) => <ReportRow key={r.id} report={r} />)}
-              </tbody>
-            </table>
-          </div>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          </svg>
+                          <span className="text-xs font-semibold text-navy uppercase tracking-wide">{groupKey}</span>
+                          <span className="text-xs text-gray-400">({rows.length})</span>
+                        </button>
+                        {!isCollapsed && (
+                          <div className="space-y-3 pl-2">
+                            {rows.map((r) => <ReportCard key={r.id} report={r} />)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                : pageRows.map((r) => <ReportCard key={r.id} report={r} />)}
+            </div>
+          </>
         )}
 
         {/* Paginação */}
