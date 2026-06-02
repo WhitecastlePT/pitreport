@@ -113,78 +113,134 @@ export default function OperatorsPage() {
           )}
         </div>
 
-        {/* Tabela */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          {loading ? (
-            <p className="text-sm text-gray-400 p-6">A carregar...</p>
-          ) : entries.length === 0 ? (
-            <div className="text-center py-16 text-gray-400">
-              <svg className="w-10 h-10 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
-              </svg>
-              <p className="text-sm">Nenhum utilizador encontrado</p>
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Email
-                  </th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    Role
-                  </th>
-                  {isAdmin && <th className="px-6 py-3" />}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {entries.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className={`transition-colors ${isSelf(entry.id) ? "bg-orange/5" : "hover:bg-gray-50"}`}
-                  >
-                    <td className="px-6 py-4 text-navy font-medium">
-                      {entry.email}
-                      {isSelf(entry.id) && (
-                        <span className="ml-2 text-xs text-gray-400 font-normal">(você)</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {isAdmin && !isSelf(entry.id) ? (
-                        <select
-                          value={entry.role}
-                          disabled={updatingRoleId === entry.id}
-                          onChange={(e) => handleRoleChange(entry.id, e.target.value as AdminRole)}
-                          className="text-xs font-medium border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-orange disabled:opacity-50 cursor-pointer"
-                        >
-                          <option value="admin">Admin</option>
-                          <option value="operator">Operador</option>
-                        </select>
-                      ) : (
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ROLE_STYLES[entry.role]}`}>
-                          {ROLE_LABELS[entry.role]}
-                        </span>
-                      )}
-                    </td>
-                    {isAdmin && (
-                      <td className="px-6 py-4 text-right">
-                        {!isSelf(entry.id) && (
-                          <button
-                            onClick={() => handleRemove(entry.id, entry.email)}
-                            disabled={removingId === entry.id}
-                            className="text-xs text-red-500 hover:text-red-700 transition-colors disabled:opacity-40 cursor-pointer"
-                          >
-                            {removingId === entry.id ? "A remover..." : "Remover"}
-                          </button>
+        {/* Tabela / Cards */}
+        {loading ? (
+          <p className="text-sm text-gray-400 p-6">A carregar...</p>
+        ) : entries.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 text-center py-16 text-gray-400">
+            <svg className="w-10 h-10 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
+            </svg>
+            <p className="text-sm">Nenhum utilizador encontrado</p>
+          </div>
+        ) : (
+          <>
+            {/* Desktop — tabela */}
+            <div className="hidden md:block bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Email
+                    </th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Role
+                    </th>
+                    {isAdmin && <th className="px-6 py-3" />}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {entries.map((entry) => (
+                    <tr
+                      key={entry.id}
+                      className={`transition-colors ${isSelf(entry.id) ? "bg-orange/5" : "hover:bg-gray-50"}`}
+                    >
+                      <td className="px-6 py-4 text-navy font-medium">
+                        {entry.email}
+                        {isSelf(entry.id) && (
+                          <span className="ml-2 text-xs text-gray-400 font-normal">(você)</span>
                         )}
                       </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+                      <td className="px-6 py-4">
+                        {isAdmin && !isSelf(entry.id) ? (
+                          <select
+                            value={entry.role}
+                            disabled={updatingRoleId === entry.id}
+                            onChange={(e) => handleRoleChange(entry.id, e.target.value as AdminRole)}
+                            className="text-xs font-medium border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-orange disabled:opacity-50 cursor-pointer"
+                          >
+                            <option value="admin">Admin</option>
+                            <option value="operator">Operador</option>
+                          </select>
+                        ) : (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ROLE_STYLES[entry.role]}`}>
+                            {ROLE_LABELS[entry.role]}
+                          </span>
+                        )}
+                      </td>
+                      {isAdmin && (
+                        <td className="px-6 py-4 text-right">
+                          {!isSelf(entry.id) && (
+                            <button
+                              onClick={() => handleRemove(entry.id, entry.email)}
+                              disabled={removingId === entry.id}
+                              className="text-xs text-red-500 hover:text-red-700 transition-colors disabled:opacity-40 cursor-pointer"
+                            >
+                              {removingId === entry.id ? "A remover..." : "Remover"}
+                            </button>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile — cards */}
+            <div className="md:hidden space-y-3">
+              {entries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className={`rounded-xl border shadow-sm p-4 ${isSelf(entry.id) ? "bg-orange/5 border-orange/20" : "bg-white border-gray-100"}`}
+                >
+                  <dl className="divide-y divide-gray-50">
+                    <div className="flex gap-3 py-1.5">
+                      <dt className="text-xs font-semibold text-gray-400 w-14 shrink-0 pt-0.5">Email</dt>
+                      <dd className="text-sm text-navy font-medium break-all flex-1">
+                        {entry.email}
+                        {isSelf(entry.id) && (
+                          <span className="ml-2 text-xs text-gray-400 font-normal">(você)</span>
+                        )}
+                      </dd>
+                    </div>
+                    <div className="flex gap-3 py-1.5">
+                      <dt className="text-xs font-semibold text-gray-400 w-14 shrink-0 pt-0.5">Role</dt>
+                      <dd className="flex-1">
+                        {isAdmin && !isSelf(entry.id) ? (
+                          <select
+                            value={entry.role}
+                            disabled={updatingRoleId === entry.id}
+                            onChange={(e) => handleRoleChange(entry.id, e.target.value as AdminRole)}
+                            className="text-xs font-medium border border-gray-200 rounded-lg px-2 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-orange disabled:opacity-50 cursor-pointer"
+                          >
+                            <option value="admin">Admin</option>
+                            <option value="operator">Operador</option>
+                          </select>
+                        ) : (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ROLE_STYLES[entry.role]}`}>
+                            {ROLE_LABELS[entry.role]}
+                          </span>
+                        )}
+                      </dd>
+                    </div>
+                  </dl>
+                  {isAdmin && !isSelf(entry.id) && (
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex justify-end">
+                      <button
+                        onClick={() => handleRemove(entry.id, entry.email)}
+                        disabled={removingId === entry.id}
+                        className="text-xs text-red-500 hover:text-red-700 transition-colors disabled:opacity-40 cursor-pointer"
+                      >
+                        {removingId === entry.id ? "A remover..." : "Remover"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Modal — Criar operador */}

@@ -123,7 +123,8 @@ export default function UsersPage() {
           <p className="text-gray-400 text-sm">Nenhum utilizador encontrado.</p>
         ) : (
           <>
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
+          {/* Desktop — tabela */}
+          <div className="hidden md:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto">
             <table className="w-full text-sm min-w-[700px]">
               <thead className="bg-gray-50 border-b border-gray-100">
                 <tr>
@@ -199,6 +200,64 @@ export default function UsersPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile — cards */}
+          <div className="md:hidden space-y-3">
+            {pageRows.map((user) => (
+              <div key={user.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                <dl className="divide-y divide-gray-50">
+                  {[
+                    ["Nome", <span className="font-medium text-navy">{user.name || "—"}</span>],
+                    ["Email", <span className="text-gray-600 break-all">{user.email}</span>],
+                    ["Registo", formatDate(user.createdAt)],
+                    ["Denúncias", <span className="inline-block bg-navy text-white text-xs font-semibold px-2.5 py-1 rounded-full">{reportCountByUser[user.id] ?? 0}</span>],
+                    ["Resolvidas", <span className="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2.5 py-1 rounded-full">{resolvedCountByUser[user.id] ?? 0}</span>],
+                  ].map(([label, value]) => (
+                    <div key={label as string} className="flex gap-3 py-1.5">
+                      <dt className="text-xs font-semibold text-gray-400 w-20 shrink-0 pt-0.5">{label}</dt>
+                      <dd className="text-sm text-gray-700 flex-1">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-100">
+                  {user.blocked ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 px-2.5 py-1 rounded-full">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+                      </svg>
+                      Bloqueado ({user.loginAttempts})
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 border border-green-200 px-2.5 py-1 rounded-full">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Ativo
+                    </span>
+                  )}
+                  <div className="flex items-center gap-3">
+                    {user.blocked && (
+                      <button
+                        onClick={() => handleUnblock(user.id)}
+                        disabled={unblocking === user.id}
+                        className="text-xs font-medium text-orange hover:underline cursor-pointer disabled:opacity-50 transition-colors"
+                      >
+                        {unblocking === user.id ? "A desbloquear..." : "Desbloquear"}
+                      </button>
+                    )}
+                    {user.id !== adminUser?.uid && (
+                      <button
+                        onClick={() => setConfirmDelete(user)}
+                        className="text-xs font-medium text-red-500 hover:text-red-700 cursor-pointer transition-colors"
+                      >
+                        Eliminar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Paginação */}
