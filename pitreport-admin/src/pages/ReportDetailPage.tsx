@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { AttributionControl, MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import Layout from "../components/Layout";
 import StatusBadge from "../components/StatusBadge";
-import { updateReportStatus, sendStatusNotification, sendFeedbackNotification } from "../services/reports";
+import { updateReportStatus, sendStatusNotification, sendFeedbackNotification, archiveReport, unarchiveReport } from "../services/reports";
 import { subscribeMessages, sendMessage } from "../services/messages";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
@@ -39,7 +39,9 @@ function formatDate(date: Date) {
 export default function ReportDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const fromArchive = searchParams.get("from") === "arquivo";
+  const { user, role } = useAuth();
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -51,6 +53,7 @@ export default function ReportDetailPage() {
   const [status, setStatus] = useState<ReportStatus>("pending");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [archiving, setArchiving] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -80,6 +83,7 @@ export default function ReportDetailPage() {
           createdAt: data.createdAt?.toDate?.() ?? new Date(),
           userId: data.userId ?? "",
           decibelLevel: data.decibelLevel != null ? Number(data.decibelLevel) : null,
+          archived: (data.archived as boolean) ?? false,
         };
         setReport(r);
         setStatus(r.status);
@@ -144,6 +148,23 @@ export default function ReportDetailPage() {
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  }
+
+  async function handleArchive() {
+    if (!report) return;
+    setArchiving(true);
+    await archiveReport(report.id);
+    setReport((prev) => prev ? { ...prev, archived: true } : prev);
+    setArchiving(false);
+  }
+
+  async function handleUnarchive() {
+    if (!report) return;
+    setArchiving(true);
+    await unarchiveReport(report.id);
+    setReport((prev) => prev ? { ...prev, archived: false } : prev);
+    navigate("/reports");
+    setArchiving(false);
   }
 
   if (loading) {
@@ -276,7 +297,7 @@ export default function ReportDetailPage() {
         {/* Cabeçalho */}
         <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-6">
           <button
-            onClick={() => navigate("/reports")}
+            onClick={() => navigate(fromArchive ? "/arquivo" : "/reports")}
             className="text-sm text-gray-400 hover:text-navy transition-colors cursor-pointer flex items-center gap-1"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -431,25 +452,60 @@ export default function ReportDetailPage() {
 
           {/* Coluna lateral */}
           <div className="flex flex-col gap-4">
-            {/* Alterar estado */}
+            {/* Alterar estado / Arquivo */}
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Alterar estado</h2>
-              <select
-                value={status}
-                onChange={(e) => { setStatus(e.target.value as ReportStatus); setSaved(false); }}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-orange"
-              >
-                {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
-              <button
-                onClick={handleSave}
-                disabled={saving || status === report.status}
-                className="w-full bg-orange text-white text-sm font-semibold rounded-lg py-2.5 hover:opacity-90 transition disabled:opacity-40 cursor-pointer"
-              >
-                {saving ? "A guardar..." : saved ? "Guardado ✓" : "Guardar"}
-              </button>
+              {report.archived ? (
+                <>
+                  <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Estado</h2>
+                  <div className="flex items-center gap-2 mb-4">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12" />
+                    </svg>
+                    <span className="text-sm font-medium text-gray-500">Arquivada</span>
+                  </div>
+                  {role === "admin" && (
+                    <button
+                      onClick={handleUnarchive}
+                      disabled={archiving}
+                      className="w-full border border-gray-300 text-gray-600 text-sm font-semibold rounded-lg py-2.5 hover:bg-gray-50 transition disabled:opacity-40 cursor-pointer"
+                    >
+                      {archiving ? "A repor..." : "Repor Denúncia"}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Alterar estado</h2>
+                  <select
+                    value={status}
+                    onChange={(e) => { setStatus(e.target.value as ReportStatus); setSaved(false); }}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-orange"
+                  >
+                    {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                      <option key={value} value={value}>{label}</option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving || status === report.status}
+                    className="w-full bg-orange text-white text-sm font-semibold rounded-lg py-2.5 hover:opacity-90 transition disabled:opacity-40 cursor-pointer mb-2"
+                  >
+                    {saving ? "A guardar..." : saved ? "Guardado ✓" : "Guardar"}
+                  </button>
+                  {report.status === "resolved" && role === "admin" && (
+                    <button
+                      onClick={handleArchive}
+                      disabled={archiving}
+                      className="w-full border border-gray-200 text-gray-500 text-sm font-medium rounded-lg py-2 hover:bg-gray-50 transition disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12" />
+                      </svg>
+                      {archiving ? "A arquivar..." : "Arquivar denúncia"}
+                    </button>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Mensagens */}

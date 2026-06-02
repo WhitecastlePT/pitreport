@@ -60,6 +60,16 @@ const links: NavItem[] = [
       </svg>
     ),
   },
+  {
+    to: "/arquivo",
+    label: "Arquivo",
+    roles: ["admin"],
+    icon: (
+      <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12" />
+      </svg>
+    ),
+  },
 ];
 
 interface SidebarProps {

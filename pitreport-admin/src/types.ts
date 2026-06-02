@@ -31,6 +31,7 @@ export interface Report {
   createdAt: Date;
   userId: string;
   decibelLevel: number | null;
+  archived?: boolean;
 }
 
 export interface Message {
