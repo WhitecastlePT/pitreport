@@ -35,6 +35,7 @@ function docToReport(d: { id: string; data: () => Record<string, unknown> }): Re
     createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.() ?? new Date(),
     userId: (data.userId as string) ?? "",
     decibelLevel: data.decibelLevel != null ? Number(data.decibelLevel) : null,
+    archived: (data.archived as boolean) ?? false,
   };
 }
 
@@ -43,8 +44,25 @@ export function subscribeAllReports(
 ): () => void {
   const q = query(collection(db, "reports"), orderBy("createdAt", "desc"));
   return onSnapshot(q, (snap) => {
-    callback(snap.docs.map(docToReport));
+    callback(snap.docs.map(docToReport).filter((r) => !r.archived));
   });
+}
+
+export function subscribeArchivedReports(
+  callback: (reports: Report[]) => void
+): () => void {
+  const q = query(collection(db, "reports"), orderBy("createdAt", "desc"));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map(docToReport).filter((r) => r.archived === true));
+  });
+}
+
+export async function archiveReport(id: string): Promise<void> {
+  await updateDoc(doc(db, "reports", id), { archived: true });
+}
+
+export async function unarchiveReport(id: string): Promise<void> {
+  await updateDoc(doc(db, "reports", id), { archived: false });
 }
 
 export async function updateReportStatus(

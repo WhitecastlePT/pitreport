@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
-import { subscribeAllReports, updateReportStatus } from "../services/reports";
+import { subscribeAllReports, updateReportStatus, archiveReport } from "../services/reports";
 import { exportReportsToExcel } from "../utils/exportExcel";
 import type { Report, ReportStatus } from "../types";
 
@@ -80,6 +80,7 @@ export default function ReportsPage() {
   const [groupBy, setGroupBy] = useState<GroupBy>("");
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [updating, setUpdating] = useState<string | null>(null);
+  const [archiving, setArchiving] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   const PAGE_SIZE = 10;
@@ -168,6 +169,15 @@ export default function ReportsPage() {
     }
   }
 
+  async function handleArchive(id: string) {
+    setArchiving(id);
+    try {
+      await archiveReport(id);
+    } finally {
+      setArchiving(null);
+    }
+  }
+
   function ReportRow({ report }: { report: Report }) {
     return (
       <tr className="hover:bg-gray-50 transition-colors">
@@ -196,12 +206,23 @@ export default function ReportsPage() {
           {formatDate(report.createdAt)}
         </td>
         <td className="px-4 py-3">
-          <button
-            onClick={() => navigate(`/reports/${report.id}`)}
-            className="text-xs font-medium text-orange hover:underline cursor-pointer"
-          >
-            Ver detalhes
-          </button>
+          <div className="flex items-center gap-3">
+            {report.status === "resolved" && (
+              <button
+                onClick={() => handleArchive(report.id)}
+                disabled={archiving === report.id}
+                className="text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-0.5 hover:bg-gray-50 transition disabled:opacity-50 cursor-pointer"
+              >
+                {archiving === report.id ? "..." : "Arquivar"}
+              </button>
+            )}
+            <button
+              onClick={() => navigate(`/reports/${report.id}`)}
+              className="text-xs font-medium text-orange hover:underline cursor-pointer"
+            >
+              Ver detalhes
+            </button>
+          </div>
         </td>
       </tr>
     );
@@ -224,7 +245,7 @@ export default function ReportsPage() {
             </div>
           ))}
         </dl>
-        <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-100">
+        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
           <select
             value={report.status}
             disabled={updating === report.id}
@@ -235,6 +256,15 @@ export default function ReportsPage() {
               <option key={value} value={value}>{label}</option>
             ))}
           </select>
+          {report.status === "resolved" && (
+            <button
+              onClick={() => handleArchive(report.id)}
+              disabled={archiving === report.id}
+              className="text-xs font-medium text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:bg-gray-50 transition disabled:opacity-50 cursor-pointer shrink-0"
+            >
+              {archiving === report.id ? "..." : "Arquivar"}
+            </button>
+          )}
           <button
             onClick={() => navigate(`/reports/${report.id}`)}
             className="text-xs font-medium text-orange hover:underline cursor-pointer shrink-0"

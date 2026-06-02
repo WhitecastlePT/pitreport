@@ -8,6 +8,7 @@ import ReportDetailPage from "./pages/ReportDetailPage";
 import UsersPage from "./pages/UsersPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import OperatorsPage from "./pages/OperatorsPage";
+import ArquivoPage from "./pages/ArquivoPage";
 
 export default function App() {
   return (
@@ -63,6 +64,14 @@ export default function App() {
             element={
               <PrivateRoute>
                 <OperatorsPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/arquivo"
+            element={
+              <PrivateRoute allowedRoles={["admin"]}>
+                <ArquivoPage />
               </PrivateRoute>
             }
           />
