@@ -76,10 +76,10 @@ export default function ArquivoPage() {
     return filtered.slice(start, start + PAGE_SIZE);
   }, [filtered, currentPage]);
 
-  async function handleRestore(id: string) {
-    setRestoring(id);
+  async function handleRestore(report: Report) {
+    setRestoring(report.id);
     try {
-      await unarchiveReport(id);
+      await unarchiveReport(report.id, report.userId, report.title);
     } finally {
       setRestoring(null);
     }
@@ -202,7 +202,7 @@ export default function ArquivoPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <button
-                            onClick={() => handleRestore(report.id)}
+                            onClick={() => handleRestore(report)}
                             disabled={restoring === report.id}
                             className="text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-0.5 hover:bg-gray-50 transition disabled:opacity-50 cursor-pointer"
                           >
@@ -241,7 +241,7 @@ export default function ArquivoPage() {
                   </dl>
                   <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-gray-100">
                     <button
-                      onClick={() => handleRestore(report.id)}
+                      onClick={() => handleRestore(report)}
                       disabled={restoring === report.id}
                       className="text-xs font-medium text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:bg-gray-50 transition disabled:opacity-50 cursor-pointer"
                     >

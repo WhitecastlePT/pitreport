@@ -169,10 +169,10 @@ export default function ReportsPage() {
     }
   }
 
-  async function handleArchive(id: string) {
-    setArchiving(id);
+  async function handleArchive(report: Report) {
+    setArchiving(report.id);
     try {
-      await archiveReport(id);
+      await archiveReport(report.id, report.userId, report.title);
     } finally {
       setArchiving(null);
     }
@@ -209,7 +209,7 @@ export default function ReportsPage() {
           <div className="flex items-center gap-3">
             {report.status === "resolved" && (
               <button
-                onClick={() => handleArchive(report.id)}
+                onClick={() => handleArchive(report)}
                 disabled={archiving === report.id}
                 className="text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-0.5 hover:bg-gray-50 transition disabled:opacity-50 cursor-pointer"
               >
@@ -258,7 +258,7 @@ export default function ReportsPage() {
           </select>
           {report.status === "resolved" && (
             <button
-              onClick={() => handleArchive(report.id)}
+              onClick={() => handleArchive(report)}
               disabled={archiving === report.id}
               className="text-xs font-medium text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:bg-gray-50 transition disabled:opacity-50 cursor-pointer shrink-0"
             >

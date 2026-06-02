@@ -57,12 +57,36 @@ export function subscribeArchivedReports(
   });
 }
 
-export async function archiveReport(id: string): Promise<void> {
+export async function archiveReport(
+  id: string,
+  userId: string,
+  reportTitle: string
+): Promise<void> {
   await updateDoc(doc(db, "reports", id), { archived: true });
+  await addDoc(collection(db, "notifications"), {
+    type: "archived",
+    userId,
+    reportId: id,
+    reportTitle,
+    createdAt: serverTimestamp(),
+    sent: false,
+  });
 }
 
-export async function unarchiveReport(id: string): Promise<void> {
+export async function unarchiveReport(
+  id: string,
+  userId: string,
+  reportTitle: string
+): Promise<void> {
   await updateDoc(doc(db, "reports", id), { archived: false });
+  await addDoc(collection(db, "notifications"), {
+    type: "unarchived",
+    userId,
+    reportId: id,
+    reportTitle,
+    createdAt: serverTimestamp(),
+    sent: false,
+  });
 }
 
 export async function updateReportStatus(
