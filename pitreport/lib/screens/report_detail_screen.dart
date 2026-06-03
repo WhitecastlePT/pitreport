@@ -424,18 +424,47 @@ class _NotificationsHistory extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (context, i) {
             final data = docs[i].data() as Map<String, dynamic>;
-            final isFeedback = (data['type'] as String?) == 'feedback';
+            final type = (data['type'] as String?) ?? 'status_change';
             final newStatus = data['newStatus'] as String?;
             final messageText = data['messageText'] as String?;
             final date = (data['createdAt'] as Timestamp?)?.toDate();
-            final title = isFeedback
-                ? 'Novo feedback recebido'
-                : 'Estado alterado';
-            final detailText = isFeedback
-                ? (messageText?.isNotEmpty == true
+
+            late final String title;
+            late final String detailText;
+            late final IconData icon;
+            late final Color iconColor;
+
+            switch (type) {
+              case 'feedback':
+                title = 'Novo feedback recebido';
+                detailText = messageText?.isNotEmpty == true
                     ? messageText!
-                    : 'Sem texto disponível.')
-                : 'Estado atualizado para: ${_statusLabels[newStatus] ?? newStatus ?? ''}';
+                    : 'Sem texto disponível.';
+                icon = Icons.message_outlined;
+                iconColor = Colors.lightBlueAccent;
+                break;
+              case 'archived':
+                title = 'Denúncia arquivada';
+                detailText =
+                    'A sua denúncia foi arquivada pela entidade responsável. O caso foi tratado.';
+                icon = Icons.archive_outlined;
+                iconColor = Colors.amberAccent;
+                break;
+              case 'unarchived':
+                title = 'Denúncia restaurada';
+                detailText =
+                    'A sua denúncia foi restaurada e está novamente ativa.';
+                icon = Icons.unarchive_outlined;
+                iconColor = Colors.tealAccent;
+                break;
+              case 'status_change':
+              default:
+                title = 'Estado alterado';
+                detailText =
+                    'Estado atualizado para: ${_statusLabels[newStatus] ?? newStatus ?? ''}';
+                icon = Icons.update;
+                iconColor = kOrange;
+            }
 
             return ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -446,8 +475,8 @@ class _NotificationsHistory extends StatelessWidget {
                   backgroundColor: Colors.white.withOpacity(0.1),
                   tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   leading: Icon(
-                    isFeedback ? Icons.message_outlined : Icons.update,
-                    color: isFeedback ? Colors.lightBlueAccent : kOrange,
+                    icon,
+                    color: iconColor,
                     size: 20,
                   ),
                   title: Text(title,
