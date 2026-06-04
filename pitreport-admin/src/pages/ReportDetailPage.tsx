@@ -154,8 +154,8 @@ export default function ReportDetailPage() {
     if (!report) return;
     setArchiving(true);
     await archiveReport(report.id, report.userId, report.title);
-    setReport((prev) => prev ? { ...prev, archived: true } : prev);
     setArchiving(false);
+    navigate("/reports");
   }
 
   async function handleUnarchive() {
