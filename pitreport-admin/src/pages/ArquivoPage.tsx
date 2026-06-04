@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
-import { subscribeArchivedReports, unarchiveReport } from "../services/reports";
+import { useAuth } from "../context/AuthContext";
+import { deleteReport, subscribeArchivedReports, unarchiveReport } from "../services/reports";
 import { exportReportsToExcel } from "../utils/exportExcel";
 import type { Report } from "../types";
 
@@ -24,6 +25,7 @@ function extractConcelho(address: string): string {
 
 export default function ArquivoPage() {
   const navigate = useNavigate();
+  const { role } = useAuth();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterCategory, setFilterCategory] = useState("");
@@ -32,6 +34,7 @@ export default function ArquivoPage() {
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [restoring, setRestoring] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const PAGE_SIZE = 10;
 
@@ -82,6 +85,16 @@ export default function ArquivoPage() {
       await unarchiveReport(report.id, report.userId, report.title);
     } finally {
       setRestoring(null);
+    }
+  }
+
+  async function handleDelete(report: Report) {
+    if (!confirm(`Tem a certeza que pretende eliminar permanentemente a denúncia "${report.title}"? Esta ação não pode ser revertida.`)) return;
+    setDeleting(report.id);
+    try {
+      await deleteReport(report.id);
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -203,11 +216,20 @@ export default function ArquivoPage() {
                         <div className="flex items-center gap-3">
                           <button
                             onClick={() => handleRestore(report)}
-                            disabled={restoring === report.id}
+                            disabled={restoring === report.id || deleting === report.id}
                             className="text-xs font-medium text-gray-500 hover:text-gray-700 border border-gray-200 rounded px-2 py-0.5 hover:bg-gray-50 transition disabled:opacity-50 cursor-pointer"
                           >
                             {restoring === report.id ? "..." : "Repor"}
                           </button>
+                          {role === "admin" && (
+                            <button
+                              onClick={() => handleDelete(report)}
+                              disabled={deleting === report.id || restoring === report.id}
+                              className="text-xs font-medium text-red-500 hover:text-red-700 border border-red-200 rounded px-2 py-0.5 hover:bg-red-50 transition disabled:opacity-50 cursor-pointer"
+                            >
+                              {deleting === report.id ? "..." : "Eliminar"}
+                            </button>
+                          )}
                           <button
                             onClick={() => navigate(`/reports/${report.id}?from=arquivo`)}
                             className="text-xs font-medium text-orange hover:underline cursor-pointer"
@@ -242,11 +264,20 @@ export default function ArquivoPage() {
                   <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-gray-100">
                     <button
                       onClick={() => handleRestore(report)}
-                      disabled={restoring === report.id}
+                      disabled={restoring === report.id || deleting === report.id}
                       className="text-xs font-medium text-gray-500 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:bg-gray-50 transition disabled:opacity-50 cursor-pointer"
                     >
                       {restoring === report.id ? "A repor..." : "Repor"}
                     </button>
+                    {role === "admin" && (
+                      <button
+                        onClick={() => handleDelete(report)}
+                        disabled={deleting === report.id || restoring === report.id}
+                        className="text-xs font-medium text-red-500 border border-red-200 rounded-lg px-2.5 py-1.5 hover:bg-red-50 transition disabled:opacity-50 cursor-pointer"
+                      >
+                        {deleting === report.id ? "A eliminar..." : "Eliminar"}
+                      </button>
+                    )}
                     <button
                       onClick={() => navigate(`/reports/${report.id}?from=arquivo`)}
                       className="text-xs font-medium text-orange hover:underline cursor-pointer"

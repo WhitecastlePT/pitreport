@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   orderBy,
@@ -87,6 +88,10 @@ export async function unarchiveReport(
     createdAt: serverTimestamp(),
     sent: false,
   });
+}
+
+export async function deleteReport(id: string): Promise<void> {
+  await deleteDoc(doc(db, "reports", id));
 }
 
 export async function updateReportStatus(
