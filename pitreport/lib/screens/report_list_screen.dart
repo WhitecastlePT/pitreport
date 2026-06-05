@@ -14,54 +14,98 @@ class ReportListScreen extends StatelessWidget {
     final userId = FirebaseAuth.instance.currentUser!.uid;
     final service = FirestoreService();
 
-    return Scaffold(
-      backgroundColor: kNavyBlue,
-      appBar: AppBar(
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
         backgroundColor: kNavyBlue,
-        elevation: 0,
-        title: const Text('As minhas Denúncias',
-            style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
+        appBar: AppBar(
+          backgroundColor: kNavyBlue,
+          elevation: 0,
+          title: const Text('As minhas Denúncias',
+              style: TextStyle(color: Colors.white)),
+          iconTheme: const IconThemeData(color: Colors.white),
+          bottom: const TabBar(
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white38,
+            indicatorColor: kOrange,
+            tabs: [
+              Tab(text: 'Pendentes'),
+              Tab(text: 'Resolvidas'),
+            ],
+          ),
+        ),
+        body: StreamBuilder<List<Report>>(
+          stream: service.getUserReports(userId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(
+                  child: CircularProgressIndicator(color: kOrange));
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Erro ao carregar denúncias',
+                    style: TextStyle(color: Colors.red[300])),
+              );
+            }
+            final reports = snapshot.data ?? [];
+            final pendentes = reports
+                .where((r) =>
+                    r.status != 'resolved' && r.status != 'archived')
+                .toList();
+            final resolvidas = reports
+                .where((r) =>
+                    r.status == 'resolved' || r.status == 'archived')
+                .toList();
+
+            return TabBarView(
+              children: [
+                _ReportList(
+                  reports: pendentes,
+                  emptyMessage: 'Não tens denúncias pendentes',
+                ),
+                _ReportList(
+                  reports: resolvidas,
+                  emptyMessage: 'Não tens denúncias resolvidas',
+                ),
+              ],
+            );
+          },
+        ),
       ),
-      body: StreamBuilder<List<Report>>(
-        stream: service.getUserReports(userId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-                child: CircularProgressIndicator(color: kOrange));
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Text('Erro ao carregar denúncias',
-                  style: TextStyle(color: Colors.red[300])),
-            );
-          }
-          final reports = snapshot.data ?? [];
-          if (reports.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.inbox_outlined, size: 64, color: Colors.white24),
-                  SizedBox(height: 12),
-                  Text('Ainda não tens denúncias',
-                      style: TextStyle(color: Colors.white54, fontSize: 16)),
-                ],
-              ),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: reports.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, i) => GestureDetector(
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => ReportDetailScreen(report: reports[i]),
-              )),
-              child: _ReportCard(report: reports[i]),
-            ),
-          );
-        },
+    );
+  }
+}
+
+class _ReportList extends StatelessWidget {
+  final List<Report> reports;
+  final String emptyMessage;
+
+  const _ReportList({required this.reports, required this.emptyMessage});
+
+  @override
+  Widget build(BuildContext context) {
+    if (reports.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.inbox_outlined, size: 64, color: Colors.white24),
+            const SizedBox(height: 12),
+            Text(emptyMessage,
+                style: const TextStyle(color: Colors.white54, fontSize: 16)),
+          ],
+        ),
+      );
+    }
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: reports.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, i) => GestureDetector(
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => ReportDetailScreen(report: reports[i]),
+        )),
+        child: _ReportCard(report: reports[i]),
       ),
     );
   }
